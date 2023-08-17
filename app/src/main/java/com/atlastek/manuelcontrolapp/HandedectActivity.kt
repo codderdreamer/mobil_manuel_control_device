@@ -31,6 +31,10 @@ import java.io.IOException
 import java.lang.Integer.min
 import java.util.UUID
 import org.tensorflow.lite.InterpreterApi
+import java.io.BufferedReader
+import java.io.File
+import java.io.FileReader
+import java.io.FileWriter
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
@@ -49,6 +53,11 @@ open class HandedectActivity : AppCompatActivity() {
         var m_bluetoothAdapter: BluetoothAdapter? = null
         var m_device: BluetoothDevice? = null
         var m_address: String? = null
+        var filew : FileWriter? = null
+        var filer : FileReader? = null
+        var path : String = ""
+        var file_line = ""
+
     }
 
 
@@ -56,6 +65,27 @@ open class HandedectActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         activity_binding = ActivityHandedectBinding.inflate(layoutInflater)
         setContentView(activity_binding.root)
+
+        path = this.filesDir.path
+        try {
+
+            var file = File( path + "record.txt")
+            val isNewFileCreated :Boolean = file.createNewFile()
+            if(isNewFileCreated){
+                println("record.txt is created successfully.")
+            } else{
+                println("record.txt already exists.")
+            }
+            filew = FileWriter(path + "record.txt")
+            filer = FileReader(path + "record.txt")
+
+
+
+        } catch (hata:Exception) {
+            println("Hata: " + hata)
+        }
+
+
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             requestMultiplePermissions.launch(arrayOf(
@@ -105,6 +135,12 @@ open class HandedectActivity : AppCompatActivity() {
             var text : String? = null
             var new_text = ""
             var text_parse_list : List<Int> = listOf()
+
+            var file_lines = ""
+            activity_binding.add.setOnClickListener{
+                file_lines = file_lines + "\n" + file_line
+                println(file_lines)
+            }
             while (true){
                 if(m_isConnected==true)
                 {
@@ -113,38 +149,53 @@ open class HandedectActivity : AppCompatActivity() {
                         var bytes = available?.let { ByteArray(it) }
                         if (available != null) {
                             new_text = ""
+                            file_line = ""
                             m_bluetoothSocket?.inputStream?.read(bytes, 0 , available)
 
                             text = bytes?.let { String(it) }
                             if (text != null) {
-                                for (i in 80 downTo 1) {
+                                for (i in 85 downTo 1) {
                                     new_text = new_text + text[text.length - i]                                                    // gelen değerleri aldığımız yer
                                 }
                             }
                         }
-                        println(new_text)
+                        //println(new_text)
                         val text_parse = new_text.split("\n").toTypedArray()
-                        println(text_parse)
+                        //println(text_parse)
                         new_text = ""
                         for(value in text_parse)
                         {
-                            if(("R" in value) || ("S" in value) || ("T" in value) || ("U" in value) || ("V" in value) || ("W" in value) )
+                            if( (("R" in value) && !("R" in new_text)) || (("S" in value) && !("S" in new_text)) || (("T" in value) && !("T" in new_text)) || (("U" in value) && !("U" in new_text)) || (("V" in value) && !("V" in new_text)) || (("W" in value) && !("W" in new_text)) )
                             {
-                                println(value)
-                                println(value)
-                                new_text = new_text + value + "\n"
+                                //println(value)
+
+                                    new_text = new_text + value + "\n"
+                                    file_line = file_line + value + "\t"
+
+
+
                             }
                         }
 
 
                         runOnUiThread {
                             activity_binding?.connectKnowledge?.setText(new_text)
+
+                            //filew = FileWriter(path + "record.txt",true)
+                            //filew?.write(file_line + "\t NOK" + "\n")
+                            //filew?.close()
+                            //val bufferedReader: BufferedReader = File(path + "record.txt").bufferedReader()
+                            //val inputString = bufferedReader.use { it.readText() }
+                            //println("\n\n\n")
+                            //println("**************************************************************************************************************************************")
+                            //println(inputString)
+                            //println("**************************************************************************************************************************************")
                         }
                     } catch (e: Exception) {
                         Log.e("client", "Cannot read data", e)
                     }
                 }
-                Thread.sleep(1000)
+                Thread.sleep(500)
             }
         }
     }
