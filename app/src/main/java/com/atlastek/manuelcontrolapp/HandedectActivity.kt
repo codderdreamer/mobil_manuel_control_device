@@ -23,14 +23,20 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import com.atlastek.manuelcontrolapp.databinding.ActivityHandedectBinding
+import com.atlastek.manuelcontrolapp.ml.Model
+import com.google.android.gms.tflite.client.TfLiteInitializationOptions
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import org.tensorflow.lite.DataType
 import java.io.IOException
 import java.lang.Integer.min
 import java.util.UUID
 import org.tensorflow.lite.InterpreterApi
+import org.tensorflow.lite.support.image.TensorImage
+import org.tensorflow.lite.support.tensorbuffer.TensorBuffer
+import org.tensorflow.lite.task.gms.vision.TfLiteVision
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileReader
@@ -44,6 +50,12 @@ open class HandedectActivity : AppCompatActivity() {
 
     private lateinit var m_pairedDevices: Set<BluetoothDevice>
     private val REQUEST_ENABLE_BLUETOOTH = 1
+
+    val options = TfLiteInitializationOptions.builder()
+        .setEnableGpuDelegateSupport(true)
+        .build()
+
+
 
     companion object {
         var m_myUUID:UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
@@ -170,8 +182,7 @@ open class HandedectActivity : AppCompatActivity() {
                                 //println(value)
 
                                     new_text = new_text + value + "\n"
-                                    file_line = file_line + value + "\t"
-
+                                    file_line = "\t" + file_line + value + "\t"
 
 
                             }
